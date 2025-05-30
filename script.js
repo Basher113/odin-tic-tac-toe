@@ -41,7 +41,7 @@ function Player(name) {
 function GameController() {
     const player1 = Player("Papu");
     const player2 = Player("Basko");  
-    
+
     const players = [
         {
             marker: "O",
@@ -62,20 +62,37 @@ function GameController() {
 
     const playRound = (row, column) => {
         
-        const picked = board.pickCell(row, column, getActivePlayer());
+        const picked = board.pickCell(row, column,activePlayer);
 
         // stop if the cell is not available
         if (!picked) return;
-
         switchPlayer();
         board.printBoard();
     }
 
-    return {playRound};
+
+    return {playRound, getActivePlayer};
 }
 
-const game = GameController();
-game.playRound(1, 1);
-game.playRound(1, 1);
-game.playRound(1, 2)
+function ScreenController() {
+    const boxDiv = document.querySelector(".box");
+    const board = GameBoard();
+
+    const updateScreen = () => {
+
+        board.getBoard().forEach(row => {
+            row.forEach(cell => {
+                const cellDiv = document.createElement("div");
+                cellDiv.classList.add("cell");
+                cellDiv.textContent = cell;
+                boxDiv.appendChild(cellDiv);
+            })
+        })
+    }
+
+    // initilize updating screen
+    updateScreen();
+}
+
+ScreenController();
 

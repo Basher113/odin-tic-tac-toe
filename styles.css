@@ -1,0 +1,21 @@
+.container {
+    display: flex;
+    justify-content: center;
+}
+
+.box {
+    background-color: lightblue;
+    width: 400px;
+    height: 500px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    justify-content: center;
+    align-items: center;
+}
+
+.cell {
+    margin: 0 auto;
+    font-size: 2rem;
+}
+
