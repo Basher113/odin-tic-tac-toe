@@ -7,13 +7,13 @@ function GameBoard() {
     for (let i = 0; i < rows; i++) {
         board[i] = [];
         for (let j = 0; j < rows; j++) {
-            board[i][j] = 0;
+            board[i][j] = "";
         }
     } 
 
     const pickCell = (row, column, player) => {
 
-        const availableCell = board[row][column] === 0;
+        const availableCell = board[row][column] === "";
         
         if (!availableCell) {
             console.log("This cell is not available, Please pick again.")
@@ -39,8 +39,8 @@ function Player(name) {
 
 
 function GameController() {
-    const player1 = Player("Papu");
-    const player2 = Player("Basko");  
+    const player1 = Player("Player1");
+    const player2 = Player("Player2");  
 
     const players = [
         {
@@ -70,26 +70,40 @@ function GameController() {
         board.printBoard();
     }
 
-
-    return {playRound, getActivePlayer};
+    return {playRound, getActivePlayer, board};
 }
 
 function ScreenController() {
     const boxDiv = document.querySelector(".box");
-    const board = GameBoard();
+    const game = GameController();
 
     const updateScreen = () => {
-
-        board.getBoard().forEach(row => {
-            row.forEach(cell => {
+        const board = game.board.getBoard();
+        
+        boxDiv.textContent = "";
+        console.log(board, "change?")
+        board.forEach((row, rowIndex )=> {
+            row.forEach((cell, columnIndex) => {
                 const cellDiv = document.createElement("div");
                 cellDiv.classList.add("cell");
                 cellDiv.textContent = cell;
+
+                cellDiv.setAttribute("data-row-index", rowIndex);
+                cellDiv.setAttribute("data-column-index", columnIndex);
                 boxDiv.appendChild(cellDiv);
             })
         })
     }
 
+    boxDiv.addEventListener("click", (e) => {
+        const row = e.target.dataset.rowIndex;
+        const column = e.target.dataset.columnIndex;
+
+        if (!row || !column) return;
+
+        game.playRound(row, column);
+        updateScreen();
+    })
     // initilize updating screen
     updateScreen();
 }

@@ -1,6 +1,7 @@
 .container {
     display: flex;
     justify-content: center;
+    box-sizing: border-box;
 }
 
 .box {
@@ -11,11 +12,12 @@
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     justify-content: center;
-    align-items: center;
 }
 
 .cell {
-    margin: 0 auto;
-    font-size: 2rem;
+    border: 1px solid lightpink;
+    font-size: 2.3rem;
+    cursor: pointer;
+    text-align: center;
+    padding-top: 50%;
 }
-
