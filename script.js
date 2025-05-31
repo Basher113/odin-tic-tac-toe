@@ -19,7 +19,6 @@ function GameBoard() {
             console.log("This cell is not available, Please pick again.")
             return;
         }
-
         // Change the cell value to player marker
         return board[row][column] = player.marker;
     }
@@ -60,31 +59,57 @@ function GameController() {
 
     board.printBoard();
 
+
     const playRound = (row, column) => {
         
-        const picked = board.pickCell(row, column,activePlayer);
+        const picked = board.pickCell(row, column, activePlayer);
 
         // stop if the cell is not available
         if (!picked) return;
-        switchPlayer();
-        board.printBoard();
+        
+        // Check if there is already a winner
+        winner = checkWinner(row, column);
+        if (winner)  {
+            console.log("we have our winner!", activePlayer.name);
+        } else {
+            switchPlayer();
+            board.printBoard();
+        }   
     }
 
-    return {playRound, getActivePlayer, board};
+    let winner;
+    const getWinner = () => winner;
+    
+    const checkWinner = (row, column) => {
+        // Check the row of the last picked cell and check if the active player wins by that row
+        const rowWinner = board.getBoard()[row].every(val => val === activePlayer.marker);
+        if (rowWinner) return activePlayer; // return the winner
+
+        // Check the column of the last picked cell and check if the active player wins by that column
+        const columnWinner = board.getBoard().every(row => row[column] === activePlayer.marker);
+        if (columnWinner) return activePlayer;
+    }   
+
+    return {playRound, getActivePlayer, board, getWinner};
 }
 
 function ScreenController() {
     const boxDiv = document.querySelector(".box");
+    const turnDiv = document.querySelector(".turn");
+    const titleEl = document.querySelector(".title")
     const game = GameController();
 
     const updateScreen = () => {
         const board = game.board.getBoard();
-        
+        const activePlayer = game.getActivePlayer();
+        const winner = game.getWinner();
+
+        turnDiv.textContent = `${activePlayer.name} turn`
         boxDiv.textContent = "";
-        console.log(board, "change?")
+  
         board.forEach((row, rowIndex )=> {
             row.forEach((cell, columnIndex) => {
-                const cellDiv = document.createElement("div");
+                const cellDiv = document.createElement("button");
                 cellDiv.classList.add("cell");
                 cellDiv.textContent = cell;
 
@@ -93,6 +118,10 @@ function ScreenController() {
                 boxDiv.appendChild(cellDiv);
             })
         })
+
+        if (winner) {
+            titleEl.textContent = activePlayer.name + " Wins!"
+        }
     }
 
     boxDiv.addEventListener("click", (e) => {
