@@ -3,8 +3,8 @@ function GameBoard() {
     const rows = 3;
     const getBoard = () => board;
 
+
     // Create a 2D array 
-   
     for (let i = 0; i < rows; i++) {
         board[i] = [];
         for (let j = 0; j < rows; j++) {
@@ -12,7 +12,8 @@ function GameBoard() {
         }
     } 
    
-
+    let cellMarkedCount = 0;
+    const cellAllMarked = () => cellMarkedCount === 9;
     const pickCell = (row, column, player) => {
 
         const availableCell = board[row][column] === "";
@@ -21,6 +22,7 @@ function GameBoard() {
             console.log("This cell is not available, Please pick again.")
             return;
         }
+        cellMarkedCount++;
         // Change the cell value to player marker
         return board[row][column] = player.marker;
     }
@@ -29,7 +31,7 @@ function GameBoard() {
         console.log(board);
     }
 
-    return {getBoard, pickCell, printBoard,};
+    return {getBoard, pickCell, printBoard, cellAllMarked};
 }
 
 function Player(name) {
@@ -55,7 +57,7 @@ function GameController() {
     const switchPlayer = () => activePlayer === players[0] ? activePlayer = players[1] : activePlayer = players[0];
     const getActivePlayer = () => activePlayer;
     const board = GameBoard();
-
+    const board2d = board.getBoard();
     board.printBoard();
 
     const playRound = (row, column) => {
@@ -69,17 +71,20 @@ function GameController() {
         winner = checkWinner(row, column);
         if (winner)  {
             console.log("we have our winner!", activePlayer.name);
+        } else if (board.cellAllMarked()) {
+            // Check if all cell is marked and if there is no winner yet.
+            console.log("Draw!")
         } else {
             switchPlayer();
             board.printBoard();
-        }   
+        }
     }
 
     let winner;
     const getWinner = () => winner;
-
+    
     const checkWinner = (row, column) => {
-        const board2d = board.getBoard();
+        
         // Check the row of the last picked cell and check if the active player wins by that row
         const rowWinner = board2d[row].every(val => val === activePlayer.marker);
         if (rowWinner) return activePlayer; // return the winner
@@ -99,11 +104,7 @@ function GameController() {
         }
     } 
 
-    const resetGame = () => {
-        GameController() 
-    }
-
-    return {playRound, getActivePlayer, board, getWinner, resetGame};
+    return {playRound, getActivePlayer, board, getWinner};
 }
 
 function ScreenController() {
@@ -141,28 +142,40 @@ function ScreenController() {
         })
 
         if (winner) {
-            // Render the winner and the play again button;
-            const winnerContainerEl = document.createElement("div");
-            winnerContainerEl.classList.add("winner-container")
+           displayWinner(winner)
+        } else if (game.board.cellAllMarked()) {
+            // Check if all cell is marked if true then display Draw
+            displayWinner()
+        } 
 
-            const winnerEl = document.createElement("h3")
-            winnerEl.textContent = activePlayer.name + " Wins!"
-
-            const playAgainButton = document.createElement("button");
-            playAgainButton.classList.add("play-again");
-            playAgainButton.textContent = "Play Again";
-
-            winnerContainerEl.appendChild(winnerEl);
-            winnerContainerEl.appendChild(playAgainButton);
-            boxDiv.appendChild(winnerContainerEl);
-
-            // reset the game when play again button is clicked
-            playAgainButton.addEventListener("click", () => {     
-                
-                ScreenController();
-            })
-        }
     }
+
+     // Render the winner and the play again button;
+    const displayWinner = (winner=null) => {
+        const winnerContainerEl = document.createElement("div");
+        winnerContainerEl.classList.add("winner-container")
+
+        const winnerEl = document.createElement("h3")
+        if (winner) {
+            winnerEl.textContent = winner.name + " Wins!"
+        } else {
+            winnerEl.textContent = "Draw!"
+        }
+
+        const playAgainButton = document.createElement("button");
+        playAgainButton.classList.add("play-again");
+        playAgainButton.textContent = "Play Again";
+
+        winnerContainerEl.appendChild(winnerEl);
+        winnerContainerEl.appendChild(playAgainButton);
+        boxDiv.appendChild(winnerContainerEl);
+
+        // reset the game when play again button is clicked
+        playAgainButton.addEventListener("click", () => {     
+            ScreenController();
+        })
+    }
+    
 
 
         
