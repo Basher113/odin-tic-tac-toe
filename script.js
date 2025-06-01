@@ -30,12 +30,9 @@ function GameBoard() {
     return {getBoard, pickCell, printBoard};
 }
 
-
 function Player(name) {
-    const score = 0;
-    return {score, name};
+    return {name};
 }
-
 
 function GameController() {
     const player1 = Player("Player1");
@@ -59,7 +56,6 @@ function GameController() {
 
     board.printBoard();
 
-
     const playRound = (row, column) => {
         
         const picked = board.pickCell(row, column, activePlayer);
@@ -79,34 +75,50 @@ function GameController() {
 
     let winner;
     const getWinner = () => winner;
-    
+
     const checkWinner = (row, column) => {
+        const board2d = board.getBoard();
         // Check the row of the last picked cell and check if the active player wins by that row
-        const rowWinner = board.getBoard()[row].every(val => val === activePlayer.marker);
+        const rowWinner = board2d[row].every(val => val === activePlayer.marker);
         if (rowWinner) return activePlayer; // return the winner
 
         // Check the column of the last picked cell and check if the active player wins by that column
-        const columnWinner = board.getBoard().every(row => row[column] === activePlayer.marker);
+        const columnWinner = board2d.every(row => row[column] === activePlayer.marker);
         if (columnWinner) return activePlayer;
-    }   
+
+        // Check for diagonal winner
+        // Check if the active player have a marker in the middle cell
+        if (board2d[1][1] === activePlayer.marker) {
+            // Check for first diagonal
+            if (board2d[0][0] === activePlayer.marker && board2d[2][2] === activePlayer.marker) return activePlayer;
+
+            // check for second diagonal
+            if (board2d[0][2] === activePlayer.marker  && board2d[2][0] === activePlayer.marker) return activePlayer;
+        }
+    } 
 
     return {playRound, getActivePlayer, board, getWinner};
 }
 
 function ScreenController() {
     const boxDiv = document.querySelector(".box");
-    const turnDiv = document.querySelector(".turn");
-    const titleEl = document.querySelector(".title")
+    const winnerEl = document.querySelector(".winner");
+    const playerEl = document.querySelectorAll(".player");
+    
+    
     const game = GameController();
+    const activePlayer = game.getActivePlayer();
 
     const updateScreen = () => {
-        const board = game.board.getBoard();
-        const activePlayer = game.getActivePlayer();
         const winner = game.getWinner();
+        const board = game.board.getBoard();
+        
+        
+        // Add class active-player for the active player in html
+        activePlayer.marker === "O" ? playerEl[0].classList.add("active-player") : playerEl[0].classList.remove("active-player");
+        activePlayer.marker === "X" ? playerEl[1].classList.add("active-player") : playerEl[1].classList.remove("active-player");
 
-        turnDiv.textContent = `${activePlayer.name} turn`
         boxDiv.textContent = "";
-  
         board.forEach((row, rowIndex )=> {
             row.forEach((cell, columnIndex) => {
                 const cellDiv = document.createElement("button");
@@ -120,10 +132,27 @@ function ScreenController() {
         })
 
         if (winner) {
-            titleEl.textContent = activePlayer.name + " Wins!"
+           createElForWinner();
         }
     }
 
+    const createElForWinner = () => {
+        // Display the winner
+        const winnerContainerEl = document.createElement("div");
+        winnerContainerEl.classList.add("winner-container")
+
+        const winnerEl = document.createElement("h3")
+        winnerEl.textContent = activePlayer.name + " Wins!"
+
+        const playAgainButton = document.createElement("button");
+        playAgainButton.textContent = "Play Again";
+
+        winnerContainerEl.appendChild(winnerEl);
+        winnerContainerEl.appendChild(playAgainButton);
+        boxDiv.appendChild(winnerContainerEl);
+    }
+
+    
     boxDiv.addEventListener("click", (e) => {
         const row = e.target.dataset.rowIndex;
         const column = e.target.dataset.columnIndex;
@@ -133,6 +162,7 @@ function ScreenController() {
         game.playRound(row, column);
         updateScreen();
     })
+   
     // initilize updating screen
     updateScreen();
 }
