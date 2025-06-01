@@ -4,12 +4,14 @@ function GameBoard() {
     const getBoard = () => board;
 
     // Create a 2D array 
+   
     for (let i = 0; i < rows; i++) {
         board[i] = [];
         for (let j = 0; j < rows; j++) {
             board[i][j] = "";
         }
     } 
+   
 
     const pickCell = (row, column, player) => {
 
@@ -27,7 +29,7 @@ function GameBoard() {
         console.log(board);
     }
 
-    return {getBoard, pickCell, printBoard};
+    return {getBoard, pickCell, printBoard,};
 }
 
 function Player(name) {
@@ -97,28 +99,30 @@ function GameController() {
         }
     } 
 
-    return {playRound, getActivePlayer, board, getWinner};
+    const resetGame = () => {
+        GameController() 
+    }
+
+    return {playRound, getActivePlayer, board, getWinner, resetGame};
 }
 
 function ScreenController() {
     const boxDiv = document.querySelector(".box");
-    const winnerEl = document.querySelector(".winner");
     const playerEl = document.querySelectorAll(".player");
-    
-    
     const game = GameController();
-    const activePlayer = game.getActivePlayer();
+    
 
     const updateScreen = () => {
         const winner = game.getWinner();
         const board = game.board.getBoard();
-        
+        const activePlayer = game.getActivePlayer();
         
         // Add class active-player for the active player in html
         activePlayer.marker === "O" ? playerEl[0].classList.add("active-player") : playerEl[0].classList.remove("active-player");
         activePlayer.marker === "X" ? playerEl[1].classList.add("active-player") : playerEl[1].classList.remove("active-player");
 
         boxDiv.textContent = "";
+        // Render the boxes
         board.forEach((row, rowIndex )=> {
             row.forEach((cell, columnIndex) => {
                 const cellDiv = document.createElement("button");
@@ -128,29 +132,41 @@ function ScreenController() {
                 cellDiv.setAttribute("data-row-index", rowIndex);
                 cellDiv.setAttribute("data-column-index", columnIndex);
                 boxDiv.appendChild(cellDiv);
+
+                if (winner) {
+                    cellDiv.disabled = true;
+                }
+
             })
         })
 
         if (winner) {
-           createElForWinner();
+            // Render the winner and the play again button;
+            const winnerContainerEl = document.createElement("div");
+            winnerContainerEl.classList.add("winner-container")
+
+            const winnerEl = document.createElement("h3")
+            winnerEl.textContent = activePlayer.name + " Wins!"
+
+            const playAgainButton = document.createElement("button");
+            playAgainButton.classList.add("play-again");
+            playAgainButton.textContent = "Play Again";
+
+            winnerContainerEl.appendChild(winnerEl);
+            winnerContainerEl.appendChild(playAgainButton);
+            boxDiv.appendChild(winnerContainerEl);
+
+            // reset the game when play again button is clicked
+            playAgainButton.addEventListener("click", () => {     
+                
+                ScreenController();
+            })
         }
     }
 
-    const createElForWinner = () => {
-        // Display the winner
-        const winnerContainerEl = document.createElement("div");
-        winnerContainerEl.classList.add("winner-container")
 
-        const winnerEl = document.createElement("h3")
-        winnerEl.textContent = activePlayer.name + " Wins!"
+        
 
-        const playAgainButton = document.createElement("button");
-        playAgainButton.textContent = "Play Again";
-
-        winnerContainerEl.appendChild(winnerEl);
-        winnerContainerEl.appendChild(playAgainButton);
-        boxDiv.appendChild(winnerContainerEl);
-    }
 
     
     boxDiv.addEventListener("click", (e) => {
