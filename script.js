@@ -1,200 +1,258 @@
-function GameBoard() {
-    const board = [];
+ function GameBoard() {
+    let board = [];
     const rows = 3;
-    const getBoard = () => board;
-
-
-    // Create a 2D array 
-    for (let i = 0; i < rows; i++) {
-        board[i] = [];
-        for (let j = 0; j < rows; j++) {
-            board[i][j] = "";
+    
+    const initialize = () => {
+        board = [];
+        for (let i = 0; i < rows; i++) {
+            board[i] = [];
+            for (let j = 0; j < rows; j++) {
+                board[i][j] = "";
+            }
         }
-    } 
-   
-    let cellMarkedCount = 0;
-    const cellAllMarked = () => cellMarkedCount === 9;
-    const pickCell = (row, column, player) => {
+    };
 
-        const availableCell = board[row][column] === "";
-        
-        if (!availableCell) {
-            console.log("This cell is not available, Please pick again.")
-            return;
+    initialize();
+
+    const getBoard = () => board;
+    let cellMarkedCount = 0;
+    
+    const cellAllMarked = () => cellMarkedCount === 9;
+    
+    const pickCell = (row, column, player) => {
+        if (board[row][column] !== "") {
+            return false;
         }
         cellMarkedCount++;
-        // Change the cell value to player marker
-        return board[row][column] = player.marker;
-    }
+        board[row][column] = player.marker;
+        return true;
+    };
 
-    const printBoard = () => {
-        console.log(board);
-    }
+    const reset = () => {
+        cellMarkedCount = 0;
+        initialize();
+    };
 
-    return {getBoard, pickCell, printBoard, cellAllMarked};
+    return { getBoard, pickCell, cellAllMarked, reset };
 }
 
-function Player(name) {
-    return {name};
-}
-
-function GameController() {
-    const player1 = Player("Player1");
-    const player2 = Player("Player2");  
-
+function GameController(player1Name, player2Name) {
     const players = [
-        {
-            marker: "O",
-            name: player1.name,
-        },
-        {
-            marker: "X",
-            name: player2.name,
-        },
-    ]
+        { marker: "O", name: player1Name || "Player 1", score: 0 },
+        { marker: "X", name: player2Name || "Player 2", score: 0 }
+    ];
 
-    let activePlayer = players[0];
-    const switchPlayer = () => activePlayer === players[0] ? activePlayer = players[1] : activePlayer = players[0];
-    const getActivePlayer = () => activePlayer;
+    let activePlayerIndex = 0;
+    let winner = null;
+    let winningCells = [];
     const board = GameBoard();
-    const board2d = board.getBoard();
-    board.printBoard();
+
+    const getActivePlayer = () => players[activePlayerIndex];
+    const getPlayers = () => players;
+    const getWinner = () => winner;
+    const getWinningCells = () => winningCells;
 
     const playRound = (row, column) => {
-        
-        const picked = board.pickCell(row, column, activePlayer);
+        if (winner) return false;
 
-        // stop if the cell is not available
-        if (!picked) return;
+        const picked = board.pickCell(row, column, getActivePlayer());
+        if (!picked) return false;
+
+        const result = checkWinner(row, column);
         
-        // Check if there is already a winner
-        winner = checkWinner(row, column);
-        if (winner)  {
-            console.log("we have our winner!", activePlayer.name);
+        if (result) {
+            winner = getActivePlayer();
+            winningCells = result.cells;
+            winner.score++;
         } else if (board.cellAllMarked()) {
-            // Check if all cell is marked and if there is no winner yet.
-            console.log("Draw!")
+            winner = "draw";
         } else {
-            switchPlayer();
-            board.printBoard();
+            activePlayerIndex = 1 - activePlayerIndex;
         }
-    }
 
-    let winner;
-    const getWinner = () => winner;
-    
+        return true;
+    };
+
     const checkWinner = (row, column) => {
-        
-        // Check the row of the last picked cell and check if the active player wins by that row
-        const rowWinner = board2d[row].every(val => val === activePlayer.marker);
-        if (rowWinner) return activePlayer; // return the winner
+        const board2d = board.getBoard();
+        const marker = getActivePlayer().marker;
 
-        // Check the column of the last picked cell and check if the active player wins by that column
-        const columnWinner = board2d.every(row => row[column] === activePlayer.marker);
-        if (columnWinner) return activePlayer;
-
-        // Check for diagonal winner
-        // Check if the active player have a marker in the middle cell
-        if (board2d[1][1] === activePlayer.marker) {
-            // Check for first diagonal
-            if (board2d[0][0] === activePlayer.marker && board2d[2][2] === activePlayer.marker) return activePlayer;
-
-            // check for second diagonal
-            if (board2d[0][2] === activePlayer.marker  && board2d[2][0] === activePlayer.marker) return activePlayer;
+        // Check row
+        if (board2d[row].every(val => val === marker)) {
+            return { cells: [[row, 0], [row, 1], [row, 2]] };
         }
-    } 
 
-    return {playRound, getActivePlayer, board, getWinner};
+        // Check column
+        if (board2d.every(r => r[column] === marker)) {
+            return { cells: [[0, column], [1, column], [2, column]] };
+        }
+
+        // Check diagonals
+        if (board2d[1][1] === marker) {
+            if (board2d[0][0] === marker && board2d[2][2] === marker) {
+                return { cells: [[0, 0], [1, 1], [2, 2]] };
+            }
+            if (board2d[0][2] === marker && board2d[2][0] === marker) {
+                return { cells: [[0, 2], [1, 1], [2, 0]] };
+            }
+        }
+
+        return null;
+    };
+
+    const resetGame = () => {
+        board.reset();
+        activePlayerIndex = 0;
+        winner = null;
+        winningCells = [];
+    };
+
+    const resetScores = () => {
+        players[0].score = 0;
+        players[1].score = 0;
+    };
+
+    return {
+        playRound,
+        getActivePlayer,
+        getPlayers,
+        getWinner,
+        getWinningCells,
+        board,
+        resetGame,
+        resetScores
+    };
 }
 
 function ScreenController() {
-    const boxDiv = document.querySelector(".box");
-    const playerEl = document.querySelectorAll(".player");
-    const game = GameController();
+    let game = null;
     
+    const setupScreen = document.getElementById('setupScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const startBtn = document.getElementById('startBtn');
+    const player1NameInput = document.getElementById('player1Name');
+    const player2NameInput = document.getElementById('player2Name');
+    const boardDiv = document.getElementById('board');
+    const player1Turn = document.getElementById('player1Turn');
+    const player2Turn = document.getElementById('player2Turn');
+    const newGameBtn = document.getElementById('newGameBtn');
+    const resetScoresBtn = document.getElementById('resetScoresBtn');
 
-    const updateScreen = () => {
-        const winner = game.getWinner();
-        const board = game.board.getBoard();
-        const activePlayer = game.getActivePlayer();
+    startBtn.addEventListener('click', startGame);
+    
+    newGameBtn.addEventListener('click', () => {
+        game.resetGame();
+        updateScreen();
+    });
+    
+    resetScoresBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to reset all scores?')) {
+            game.resetScores();
+            game.resetGame();
+            updateScreen();
+        }
+    });
+
+    function startGame() {
+        const name1 = player1NameInput.value.trim() || 'Player 1';
+        const name2 = player2NameInput.value.trim() || 'Player 2';
         
-        // Add class active-player for the active player in html
-        activePlayer.marker === "O" ? playerEl[0].classList.add("active-player") : playerEl[0].classList.remove("active-player");
-        activePlayer.marker === "X" ? playerEl[1].classList.add("active-player") : playerEl[1].classList.remove("active-player");
-
-        boxDiv.textContent = "";
-        // Render the boxes
-        board.forEach((row, rowIndex )=> {
-            row.forEach((cell, columnIndex) => {
-                const cellDiv = document.createElement("button");
-                cellDiv.classList.add("cell");
-                cellDiv.textContent = cell;
-
-                cellDiv.setAttribute("data-row-index", rowIndex);
-                cellDiv.setAttribute("data-column-index", columnIndex);
-                boxDiv.appendChild(cellDiv);
-
-                if (winner) {
-                    cellDiv.disabled = true;
-                }
-
-            })
-        })
-
-        if (winner) {
-           displayWinner(winner)
-        } else if (game.board.cellAllMarked()) {
-            // Check if all cell is marked if true then display Draw
-            displayWinner()
-        } 
-
+        game = GameController(name1, name2);
+        
+        document.getElementById('player1NameDisplay').textContent = name1;
+        document.getElementById('player2NameDisplay').textContent = name2;
+        player1Turn.textContent = `${name1} (O)`;
+        player2Turn.textContent = `${name2} (X)`;
+        
+        setupScreen.classList.remove('active');
+        gameScreen.classList.add('active');
+        
+        updateScreen();
     }
 
-     // Render the winner and the play again button;
-    const displayWinner = (winner=null) => {
-        const winnerContainerEl = document.createElement("div");
-        winnerContainerEl.classList.add("winner-container")
+    function updateScreen() {
+        if (!game) return;
 
-        const winnerEl = document.createElement("h3")
+        const board = game.board.getBoard();
+        const activePlayer = game.getActivePlayer();
+        const winner = game.getWinner();
+        const players = game.getPlayers();
+        const winningCells = game.getWinningCells();
+
+        // Update scores
+        document.getElementById('score1').textContent = players[0].score;
+        document.getElementById('score2').textContent = players[1].score;
+
+        // Update active player indicator
+        player1Turn.classList.toggle('active-player', !winner && activePlayer.marker === 'O');
+        player2Turn.classList.toggle('active-player', !winner && activePlayer.marker === 'X');
+
+        // Render board
+        boardDiv.innerHTML = '';
+        board.forEach((row, rowIndex) => {
+            row.forEach((cell, columnIndex) => {
+                const cellBtn = document.createElement('button');
+                cellBtn.classList.add('cell');
+                cellBtn.textContent = cell;
+                cellBtn.dataset.row = rowIndex;
+                cellBtn.dataset.column = columnIndex;
+
+                // Check if this cell is part of winning combination
+                const isWinningCell = winningCells.some(
+                    ([r, c]) => r === rowIndex && c === columnIndex
+                );
+                if (isWinningCell) {
+                    cellBtn.classList.add('winning-cell');
+                }
+
+                if (winner || cell !== '') {
+                    cellBtn.disabled = true;
+                }
+
+                boardDiv.appendChild(cellBtn);
+            });
+        });
+
+        // Show winner message
         if (winner) {
-            winnerEl.textContent = winner.name + " Wins!"
+            displayWinner(winner);
+        }
+    }
+
+    const displayWinner = (winner) => {
+        const winnerContainerEl = document.createElement("div");
+        winnerContainerEl.classList.add("winner-container");
+
+        const winnerEl = document.createElement("h3");
+        if (winner === 'draw') {
+            winnerEl.textContent = "Draw!";
         } else {
-            winnerEl.textContent = "Draw!"
+            winnerEl.textContent = winner.name + " Wins!";
         }
 
         const playAgainButton = document.createElement("button");
-        playAgainButton.classList.add("play-again");
         playAgainButton.textContent = "Play Again";
 
         winnerContainerEl.appendChild(winnerEl);
         winnerContainerEl.appendChild(playAgainButton);
-        boxDiv.appendChild(winnerContainerEl);
+        boardDiv.appendChild(winnerContainerEl);
 
-        // reset the game when play again button is clicked
-        playAgainButton.addEventListener("click", () => {     
-            ScreenController();
-        })
+        playAgainButton.addEventListener("click", () => {
+            game.resetGame();
+            updateScreen();
+        });
     }
-    
 
-
+    boardDiv.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('cell')) return;
         
+        const row = Number(e.target.dataset.row);
+        const column = Number(e.target.dataset.column);
 
-
-    
-    boxDiv.addEventListener("click", (e) => {
-        const row = e.target.dataset.rowIndex;
-        const column = e.target.dataset.columnIndex;
-
-        if (!row || !column) return;
-
-        game.playRound(row, column);
-        updateScreen();
-    })
-   
-    // initilize updating screen
-    updateScreen();
+        if (game.playRound(row, column)) {
+            updateScreen();
+        }
+    });
 }
 
 ScreenController();
-
