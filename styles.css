@@ -1,4 +1,4 @@
-/* Josh Comeau’s custom CSS reset  */
+/* Josh Comeau's custom CSS reset  */
 /* 1. Use a more-intuitive box-sizing model */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -75,6 +75,93 @@ body {
     text-shadow: 0px 0px 10px #00c2cb, 0px 0px 20px #fff;
 }
 
+/* Name setup styles */
+.setup-screen {
+    display: none;
+}
+
+.setup-screen.active {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5em;
+    width: 400px;
+}
+
+.name-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.name-input-group label {
+    font-size: 1.2rem;
+}
+
+.name-input-group input {
+    padding: 0.5em;
+    background-color: #1f1f1f;
+    border: 1px solid white;
+    border-radius: 4px;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.name-input-group input:focus {
+    outline: none;
+    border-color: #00c2cb;
+    box-shadow: 0 0 10px #00c2cb;
+}
+
+.start-btn {
+    padding: 0.7em;
+    background-color: #810050;
+    border: 1px solid white;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 1.2rem;
+    transition: transform 400ms ease-in-out, background-color 400ms ease-in-out;
+}
+
+.start-btn:hover {
+    transform: scale(1.050);
+    background-color: #810050f1;
+}
+
+/* Game screen */
+.game-screen {
+    display: none;
+}
+
+.game-screen.active {
+    display: contents;
+}
+
+/* Scoreboard */
+.scoreboard {
+    display: flex;
+    gap: 3em;
+    margin-bottom: 1em;
+}
+
+.player-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3em;
+}
+
+.player-name {
+    font-size: 1.2rem;
+}
+
+.player-score {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #00c2cb;
+    text-shadow: 0px 0px 5px #00c2cb;
+}
+
 .turn {
     display: flex;
     gap: 5em;
@@ -93,7 +180,7 @@ body {
 
 .box {
   width: 400px;
-  height: 500px;
+  height: 400px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
@@ -114,8 +201,17 @@ body {
     transition: transform 400ms ease-in-out;
 }
 
-.cell:hover {
+.cell:hover:not(:disabled) {
   transform: scale(1.050);
+}
+
+.cell:disabled {
+    cursor: not-allowed;
+}
+
+.cell.winning-cell {
+    background-color: #810050;
+    box-shadow: 0 0 20px #810050;
 }
 
 .winner-container {
@@ -126,6 +222,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 1em;
   width: 100%;
   height: 100%;
   z-index: 2;
@@ -138,7 +235,7 @@ body {
 }
 
 .winner-container button {
-  padding: 0.4em;
+  padding: 0.4em 1em;
   background-color:  #810050;
   border: 1px solid white;
   color: white;
@@ -150,6 +247,36 @@ body {
 .winner-container button:hover {
   transform: scale(1.050);
   background-color: #810050f1;
+}
+
+/* Control buttons */
+.controls {
+    display: flex;
+    gap: 1em;
+    margin-top: 1em;
+}
+
+.controls button {
+    padding: 0.5em 1em;
+    background-color: #1f1f1f;
+    border: 1px solid white;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: transform 400ms ease-in-out, background-color 400ms ease-in-out;
+}
+
+.controls button:hover {
+    transform: scale(1.050);
+    background-color: #2f2f2f;
+}
+
+.controls .reset-scores-btn {
+    background-color: #810050;
+}
+
+.controls .reset-scores-btn:hover {
+    background-color: #810050f1;
 }
 
 @keyframes winner-move {
