@@ -7,16 +7,23 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
+     <div class="container">
         <h1 class="title">TIC TAC TOE</h1>
         
         <!-- Setup Screen -->
         <div class="setup-screen active" id="setupScreen">
+            <!-- ADDED: Game mode selection -->
+            <div class="mode-selection">
+                <button class="mode-btn selected" data-mode="pvp">Player vs Player</button>
+                <button class="mode-btn" data-mode="ai">Player vs AI</button>
+            </div>
+            <!-- END ADDED -->
+            
             <div class="name-input-group">
                 <label for="player1Name">Player 1 Name (O):</label>
                 <input type="text" id="player1Name" placeholder="Enter name" maxlength="15">
             </div>
-            <div class="name-input-group">
+            <div class="name-input-group" id="player2NameGroup">
                 <label for="player2Name">Player 2 Name (X):</label>
                 <input type="text" id="player2Name" placeholder="Enter name" maxlength="15">
             </div>
@@ -40,15 +47,20 @@
                 <div class="player" id="player1Turn">Player O</div>
                 <div class="player" id="player2Turn">Player X</div>
             </div>
+            <div class="ai-thinking" id="aiThinking">
+            AI IS THINKING...
+            </div>
 
             <div class="box" id="board"></div>
 
             <div class="controls">
                 <button id="newGameBtn">New Game</button>
                 <button class="reset-scores-btn" id="resetScoresBtn">Reset Scores</button>
+                <button class="go-back-btn" id="goBackBtn">Go Back to Setup</button><!-- ADDED -->
             </div>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>

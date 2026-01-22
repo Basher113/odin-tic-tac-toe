@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe</title>
+    <style>
+        /* Josh Comeau's custom CSS reset  */
+        /* 1. Use a more-intuitive box-sizing model */
+        *, *::before, *::after {
+          box-sizing: border-box;
+        }
+
+        /* 2. Remove default margin */
+        * {
+          margin: 0;
+        }
+
+        /* 3. Enable keyword animations */
+        @media (prefers-reduced-motion: no-preference) {
+          html {
+            interpolate-size: allow-keywords;
+          }
+        }
+
+        body {
+          /* 4. Add accessible line-height */
+          line-height: 1.5;
+          /* 5. Improve text rendering */
+          -webkit-font-smoothing: antialiased;
+        }
+
+        /* 6. Improve media defaults */
+        img, picture, video, canvas, svg {
+          display: block;
+          max-width: 100%;
+        }
+
+        /* 7. Inherit fonts for form controls */
+        input, button, textarea, select {
+          font: inherit;
+        }
+
+        /* 8. Avoid text overflows */
+        p, h1, h2, h3, h4, h5, h6 {
+          overflow-wrap: break-word;
+        }
+
+        /* 9. Improve line wrapping */
+        p {
+          text-wrap: pretty;
+        }
+        h1, h2, h3, h4, h5, h6 {
+          text-wrap: balance;
+        }
+
+        /*
+          10. Create a root stacking context
+        */
+        #root, #__next {
+          isolation: isolate;
+        }
+
+        body {
+            font-family: serif;
+            background-color: #141414;
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+            padding-top: 2em;
+            gap: 2em;
+            position: relative;
+        }
+
+        .title {
+            font-size: 4rem;
+            text-shadow: 0px 0px 10px #00c2cb, 0px 0px 20px #fff;
+        }
+
+        /* Name setup styles */
+        .setup-screen {
+            display: none;
+        }
+
+        .setup-screen.active {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5em;
+            width: 400px;
+        }
+
+        /* ADDED: Game mode selection styles */
+        .mode-selection {
+            display: flex;
+            gap: 1em;
+            margin-bottom: 1em;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 0.7em;
+            background-color: #1f1f1f;
+            border: 2px solid white;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            transition: all 400ms ease-in-out;
+        }
+
+        .mode-btn:hover {
+            transform: scale(1.05);
+            border-color: #00c2cb;
+            box-shadow: 0 0 10px #00c2cb;
+        }
+
+        .mode-btn.selected {
+            background-color: #810050;
+            border-color: #810050;
+            box-shadow: 0 0 15px #810050;
+        }
+        /* END ADDED */
+
+        .name-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5em;
+        }
+
+        .name-input-group label {
+            font-size: 1.2rem;
+        }
+
+        .name-input-group input {
+            padding: 0.5em;
+            background-color: #1f1f1f;
+            border: 1px solid white;
+            border-radius: 4px;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .name-input-group input:focus {
+            outline: none;
+            border-color: #00c2cb;
+            box-shadow: 0 0 10px #00c2cb;
+        }
+
+        .start-btn {
+            padding: 0.7em;
+            background-color: #810050;
+            border: 1px solid white;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            transition: transform 400ms ease-in-out, background-color 400ms ease-in-out;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.050);
+            background-color: #810050f1;
+        }
+
+        /* Game screen */
+        .game-screen {
+            display: none;
+        }
+
+        .game-screen.active {
+            display: contents;
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            display: flex;
+            gap: 3em;
+            margin-bottom: 1em;
+        }
+
+        .player-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3em;
+        }
+
+        .player-name {
+            font-size: 1.2rem;
+        }
+
+        .player-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00c2cb;
+            text-shadow: 0px 0px 5px #00c2cb;
+        }
+
+        .turn {
+            display: flex;
+            gap: 5em;
+        }
+
+        .turn .player {
+            font-size: 1.6rem;
+            border: 1px solid white;
+            padding: 0.2em 0.5em;
+            border-radius: 4px;
+        }
+
+        .active-player {
+            background-color: #810050;
+        }
+
+        .box {
+          width: 400px;
+          height: 400px;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: repeat(3, 1fr);
+          justify-content: center;
+          position: relative;
+        }
+
+        .cell { 
+            font-size: 3rem;
+            background-color: transparent;
+            cursor: pointer;
+            text-align: center;
+            border: 2px solid white;
+            font-size: 3rem;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 0 10px #ffffff;
+            transition: transform 400ms ease-in-out;
+        }
+
+        .cell:hover:not(:disabled) {
+          transform: scale(1.050);
+        }
+
+        .cell:disabled {
+            cursor: not-allowed;
+        }
+
+        .cell.winning-cell {
+            background-color: #810050;
+            box-shadow: 0 0 20px #810050;
+        }
+
+        .winner-container {
+          background-color: #141414ad;
+          position: absolute;
+          font-size: 1.3rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 1em;
+          width: 100%;
+          height: 100%;
+          z-index: 2;
+          animation: winner-move 1.4s ease-in;
+        }
+
+        .winner-container h3 {
+          font-size: 4rem;
+          text-shadow: 0px 0px 10px #810050, 0px 0px 20px #fff;
+        }
+
+        .winner-container button {
+          padding: 0.4em 1em;
+          background-color:  #810050;
+          border: 1px solid white;
+          color: white;
+          cursor: pointer;
+          border-radius: 4px;
+          transition: transform 400ms ease-in-out, background-color 400ms ease-in-out;
+        }
+
+        .winner-container button:hover {
+          transform: scale(1.050);
+          background-color: #810050f1;
+        }
+
+        /* Control buttons */
+        .controls {
+            display: flex;
+            gap: 1em;
+            margin-top: 1em;
+        }
+
+        .controls button {
+            padding: 0.5em 1em;
+            background-color: #1f1f1f;
+            border: 1px solid white;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: transform 400ms ease-in-out, background-color 400ms ease-in-out;
+        }
+
+        .controls button:hover {
+            transform: scale(1.050);
+            background-color: #2f2f2f;
+        }
+
+        .controls .reset-scores-btn {
+            background-color: #810050;
+        }
+
+        .controls .reset-scores-btn:hover {
+            background-color: #810050f1;
+        }
+
+        /* ADDED: Go back button */
+        .controls .go-back-btn {
+            background-color: #1f1f1f;
+        }
+
+        .controls .go-back-btn:hover {
+            background-color: #2f2f2f;
+        }
+        /* END ADDED */
+
+        @keyframes winner-move {
+          0% {
+            transform: translateY(-100%);
+          }
+
+          100% {
+            transform: translateY(0);
+          }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">TIC TAC TOE</h1>
+        
+        <!-- Setup Screen -->
+        <div class="setup-screen active" id="setupScreen">
+            <!-- ADDED: Game mode selection -->
+            <div class="mode-selection">
+                <button class="mode-btn selected" data-mode="pvp">Player vs Player</button>
+                <button class="mode-btn" data-mode="ai">Player vs AI</button>
+            </div>
+            <!-- END ADDED -->
+            
+            <div class="name-input-group">
+                <label for="player1Name">Player 1 Name (O):</label>
+                <input type="text" id="player1Name" placeholder="Enter name" maxlength="15">
+            </div>
+            <div class="name-input-group" id="player2NameGroup">
+                <label for="player2Name">Player 2 Name (X):</label>
+                <input type="text" id="player2Name" placeholder="Enter name" maxlength="15">
+            </div>
+            <button class="start-btn" id="startBtn">Start Game</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div class="game-screen" id="gameScreen">
+            <div class="scoreboard">
+                <div class="player-info">
+                    <div class="player-name" id="player1NameDisplay">Player 1</div>
+                    <div class="player-score" id="score1">0</div>
+                </div>
+                <div class="player-info">
+                    <div class="player-name" id="player2NameDisplay">Player 2</div>
+                    <div class="player-score" id="score2">0</div>
+                </div>
+            </div>
+
+            <div class="turn">
+                <div class="player" id="player1Turn">Player O</div>
+                <div class="player" id="player2Turn">Player X</div>
+            </div>
+
+            <div class="box" id="board"></div>
+
+            <div class="controls">
+                <button id="newGameBtn">New Game</button>
+                <button class="reset-scores-btn" id="resetScoresBtn">Reset Scores</button>
+                <button class="go-back-btn" id="goBackBtn">Go Back to Setup</button><!-- ADDED -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ADDED: Minimax AI Algorithm
+        function MinimaxAI() {
+            const findBestMove = (board, aiMarker, humanMarker) => {
+                let bestScore = -Infinity;
+                let bestMove = null;
+
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (board[i][j] === "") {
+                            board[i][j] = aiMarker;
+                            let score = minimax(board, 0, false, aiMarker, humanMarker);
+                            board[i][j] = "";
+                            
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestMove = { row: i, column: j };
+                            }
+                        }
+                    }
+                }
+                return bestMove;
+            };
+
+            const minimax = (board, depth, isMaximizing, aiMarker, humanMarker) => {
+                const result = checkGameState(board, aiMarker, humanMarker);
+                
+                if (result !== null) {
+                    return result;
+                }
+
+                if (isMaximizing) {
+                    let bestScore = -Infinity;
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            if (board[i][j] === "") {
+                                board[i][j] = aiMarker;
+                                let score = minimax(board, depth + 1, false, aiMarker, humanMarker);
+                                board[i][j] = "";
+                                bestScore = Math.max(score, bestScore);
+                            }
+                        }
+                    }
+                    return bestScore;
+                } else {
+                    let bestScore = Infinity;
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            if (board[i][j] === "") {
+                                board[i][j] = humanMarker;
+                                let score = minimax(board, depth + 1, true, aiMarker, humanMarker);
+                                board[i][j] = "";
+                                bestScore = Math.min(score, bestScore);
+                            }
+                        }
+                    }
+                    return bestScore;
+                }
+            };
+
+            const checkGameState = (board, aiMarker, humanMarker) => {
+                // Check winner
+                const winner = checkWinnerForMinimax(board);
+                if (winner === aiMarker) return 10;
+                if (winner === humanMarker) return -10;
+                
+                // Check draw
+                let isFull = true;
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (board[i][j] === "") {
+                            isFull = false;
+                            break;
+                        }
+                    }
+                    if (!isFull) break;
+                }
+                if (isFull) return 0;
+                
+                return null;
+            };
+
+            const checkWinnerForMinimax = (board) => {
+                // Check rows
+                for (let i = 0; i < 3; i++) {
+                    if (board[i][0] !== "" && board[i][0] === board[i][1] && board[i][1] === board[i][2]) {
+                        return board[i][0];
+                    }
+                }
+                
+                // Check columns
+                for (let j = 0; j < 3; j++) {
+                    if (board[0][j] !== "" && board[0][j] === board[1][j] && board[1][j] === board[2][j]) {
+                        return board[0][j];
+                    }
+                }
+                
+                // Check diagonals
+                if (board[1][1] !== "") {
+                    if (board[0][0] === board[1][1] && board[1][1] === board[2][2]) {
+                        return board[1][1];
+                    }
+                    if (board[0][2] === board[1][1] && board[1][1] === board[2][0]) {
+                        return board[1][1];
+                    }
+                }
+                
+                return null;
+            };
+
+            return { findBestMove };
+        }
+        // END ADDED
+
+        function GameBoard() {
+            let board = [];
+            const rows = 3;
+            
+            const initialize = () => {
+                board = [];
+                for (let i = 0; i < rows; i++) {
+                    board[i] = [];
+                    for (let j = 0; j < rows; j++) {
+                        board[i][j] = "";
+                    }
+                }
+            };
+
+            initialize();
+
+            const getBoard = () => board;
+            let cellMarkedCount = 0;
+            
+            const cellAllMarked = () => cellMarkedCount === 9;
+            
+            const pickCell = (row, column, player) => {
+                if (board[row][column] !== "") {
+                    return false;
+                }
+                cellMarkedCount++;
+                board[row][column] = player.marker;
+                return true;
+            };
+
+            const reset = () => {
+                cellMarkedCount = 0;
+                initialize();
+            };
+
+            return { getBoard, pickCell, cellAllMarked, reset };
+        }
+
+        // MODIFIED: Added isAI parameter for GameController
+        function GameController(player1Name, player2Name, isAIMode = false) {
+            const players = [
+                { marker: "O", name: player1Name || "Player 1", score: 0, isAI: false },
+                { marker: "X", name: player2Name || (isAIMode ? "AI" : "Player 2"), score: 0, isAI: isAIMode }
+            ];
+
+            let activePlayerIndex = 0;
+            let winner = null;
+            let winningCells = [];
+            const board = GameBoard();
+            const ai = MinimaxAI(); // ADDED: Initialize AI
+
+            const getActivePlayer = () => players[activePlayerIndex];
+            const getPlayers = () => players;
+            const getWinner = () => winner;
+            const getWinningCells = () => winningCells;
+
+            const playRound = (row, column) => {
+                if (winner) return false;
+
+                const picked = board.pickCell(row, column, getActivePlayer());
+                if (!picked) return false;
+
+                const result = checkWinner(row, column);
+                
+                if (result) {
+                    winner = getActivePlayer();
+                    winningCells = result.cells;
+                    winner.score++;
+                } else if (board.cellAllMarked()) {
+                    winner = "draw";
+                } else {
+                    activePlayerIndex = 1 - activePlayerIndex;
+                }
+
+                return true;
+            };
+
+            // ADDED: AI move method
+            const makeAIMove = () => {
+                if (winner || !getActivePlayer().isAI) return null;
+                
+                const currentBoard = board.getBoard();
+                const aiMarker = getActivePlayer().marker;
+                const humanMarker = players[0].marker;
+                
+                const move = ai.findBestMove(currentBoard, aiMarker, humanMarker);
+                return move;
+            };
+            // END ADDED
+
+            const checkWinner = (row, column) => {
+                const board2d = board.getBoard();
+                const marker = getActivePlayer().marker;
+
+                // Check row
+                if (board2d[row].every(val => val === marker)) {
+                    return { cells: [[row, 0], [row, 1], [row, 2]] };
+                }
+
+                // Check column
+                if (board2d.every(r => r[column] === marker)) {
+                    return { cells: [[0, column], [1, column], [2, column]] };
+                }
+
+                // Check diagonals
+                if (board2d[1][1] === marker) {
+                    if (board2d[0][0] === marker && board2d[2][2] === marker) {
+                        return { cells: [[0, 0], [1, 1], [2, 2]] };
+                    }
+                    if (board2d[0][2] === marker && board2d[2][0] === marker) {
+                        return { cells: [[0, 2], [1, 1], [2, 0]] };
+                    }
+                }
+
+                return null;
+            };
+
+            const resetGame = () => {
+                board.reset();
+                activePlayerIndex = 0;
+                winner = null;
+                winningCells = [];
+            };
+
+            const resetScores = () => {
+                players[0].score = 0;
+                players[1].score = 0;
+            };
+
+            return {
+                playRound,
+                getActivePlayer,
+                getPlayers,
+                getWinner,
+                getWinningCells,
+                board,
+                resetGame,
+                resetScores,
+                makeAIMove  // ADDED: Export AI move method
+            };
+        }
+
+        function ScreenController() {
+            let game = null;
+            let isAIMode = false; // ADDED: Track game mode
+            
+            const setupScreen = document.getElementById('setupScreen');
+            const gameScreen = document.getElementById('gameScreen');
+            const startBtn = document.getElementById('startBtn');
+            const player1NameInput = document.getElementById('player1Name');
+            const player2NameInput = document.getElementById('player2Name');
+            const player2NameGroup = document.getElementById('player2NameGroup'); // ADDED
+            const boardDiv = document.getElementById('board');
+            const player1Turn = document.getElementById('player1Turn');
+            const player2Turn = document.getElementById('player2Turn');
+            const newGameBtn = document.getElementById('newGameBtn');
+            const resetScoresBtn = document.getElementById('resetScoresBtn');
+            const goBackBtn = document.getElementById('goBackBtn'); // ADDED
+            const modeButtons = document.querySelectorAll('.mode-btn'); // ADDED
+
+            // ADDED: Mode selection handling
+            modeButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent any default behavior
+                    modeButtons.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    isAIMode = btn.dataset.mode === 'ai';
+                    
+                    // Hide/show player 2 name input based on mode
+                    if (isAIMode) {
+                        player2NameGroup.style.display = 'none';
+                    } else {
+                        player2NameGroup.style.display = 'flex';
+                    }
+                });
+            });
+            // END ADDED
+
+            startBtn.addEventListener('click', startGame);
+            
+            newGameBtn.addEventListener('click', () => {
+                game.resetGame();
+                updateScreen();
+            });
+            
+            resetScoresBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to reset all scores?')) {
+                    game.resetScores();
+                    game.resetGame();
+                    updateScreen();
+                }
+            });
+
+            // ADDED: Go back button handler
+            goBackBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to go back to setup? This will reset all scores.')) {
+                    gameScreen.classList.remove('active');
+                    setupScreen.classList.add('active');
+                    game = null;
+                    
+                    // Reset form
+                    player1NameInput.value = '';
+                    player2NameInput.value = '';
+                    isAIMode = false;
+                    modeButtons.forEach(b => b.classList.remove('selected'));
+                    modeButtons[0].classList.add('selected');
+                    player2NameGroup.style.display = 'flex';
+                }
+            });
+            // END ADDED
+
+            function startGame() {
+                const name1 = player1NameInput.value.trim() || 'Player 1';
+                const name2 = isAIMode ? 'AI' : (player2NameInput.value.trim() || 'Player 2'); // MODIFIED
+                
+                game = GameController(name1, name2, isAIMode); // MODIFIED: Pass AI mode
+                
+                document.getElementById('player1NameDisplay').textContent = name1;
+                document.getElementById('player2NameDisplay').textContent = name2;
+                player1Turn.textContent = `${name1} (O)`;
+                player2Turn.textContent = `${name2} (X)`;
+                
+                setupScreen.classList.remove('active');
+                gameScreen.classList.add('active');
+                
+                updateScreen();
+            }
+
+            function updateScreen() {
+                if (!game) return;
+
+                const board = game.board.getBoard();
+                const activePlayer = game.getActivePlayer();
+                const winner = game.getWinner();
+                const players = game.getPlayers();
+                const winningCells = game.getWinningCells();
+
+                // Update scores
+                document.getElementById('score1').textContent = players[0].score;
+                document.getElementById('score2').textContent = players[1].score;
+
+                // Update active player indicator
+                player1Turn.classList.toggle('active-player', !winner && activePlayer.marker === 'O');
+                player2Turn.classList.toggle('active-player', !winner && activePlayer.marker === 'X');
+
+                // Render board
+                boardDiv.innerHTML = '';
+                board.forEach((row, rowIndex) => {
+                    row.forEach((cell, columnIndex) => {
+                        const cellBtn = document.createElement('button');
+                        cellBtn.classList.add('cell');
+                        cellBtn.textContent = cell;
+                        cellBtn.dataset.row = rowIndex;
+                        cellBtn.dataset.column = columnIndex;
+
+                        // Check if this cell is part of winning combination
+                        const isWinningCell = winningCells.some(
+                            ([r, c]) => r === rowIndex && c === columnIndex
+                        );
+                        if (isWinningCell) {
+                            cellBtn.classList.add('winning-cell');
+                        }
+
+                        if (winner || cell !== '') {
+                            cellBtn.disabled = true;
+                        }
+
+                        boardDiv.appendChild(cellBtn);
+                    });
+                });
+
+                // Show winner message
+                if (winner) {
+                    displayWinner(winner);
+                } else if (activePlayer.isAI && !winner) {
+                    // ADDED: Trigger AI move after a short delay
+                    setTimeout(() => {
+                        const aiMove = game.makeAIMove();
+                        if (aiMove) {
+                            game.playRound(aiMove.row, aiMove.column);
+                            updateScreen();
+                        }
+                    }, 500);
+                }
+                // END ADDED
+            }
+
+            const displayWinner = (winner) => {
+                const winnerContainerEl = document.createElement("div");
+                winnerContainerEl.classList.add("winner-container");
+
+                const winnerEl = document.createElement("h3");
+                if (winner === 'draw') {
+                    winnerEl.textContent = "Draw!";
+                } else {
+                    winnerEl.textContent = winner.name + " Wins!";
+                }
+
+                const playAgainButton = document.createElement("button");
+                playAgainButton.textContent = "Play Again";
+
+                winnerContainerEl.appendChild(winnerEl);
+                winnerContainerEl.appendChild(playAgainButton);
+                boardDiv.appendChild(winnerContainerEl);
+
+                playAgainButton.addEventListener("click", () => {
+                    game.resetGame();
+                    updateScreen();
+                });
+            }
+
+            boardDiv.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('cell')) return;
+                
+                const row = Number(e.target.dataset.row);
+                const column = Number(e.target.dataset.column);
+
+                if (game.playRound(row, column)) {
+                    updateScreen();
+                }
+            });
+        }
+
+        ScreenController();
+    </script>
+</body>
+</html>

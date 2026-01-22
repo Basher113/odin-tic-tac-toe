@@ -87,6 +87,38 @@ body {
     width: 400px;
 }
 
+/* ADDED: Game mode selection styles */
+.mode-selection {
+    display: flex;
+    gap: 1em;
+    margin-bottom: 1em;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 0.7em;
+    background-color: #1f1f1f;
+    border: 2px solid white;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    transition: all 400ms ease-in-out;
+}
+
+.mode-btn:hover {
+    transform: scale(1.05);
+    border-color: #00c2cb;
+    box-shadow: 0 0 10px #00c2cb;
+}
+
+.mode-btn.selected {
+    background-color: #810050;
+    border-color: #810050;
+    box-shadow: 0 0 15px #810050;
+}
+/* END ADDED */
+
 .name-input-group {
     display: flex;
     flex-direction: column;
@@ -153,6 +185,15 @@ body {
 
 .player-name {
     font-size: 1.2rem;
+}
+
+.ai-thinking {
+  font-size: 1.5rem;
+  text-align: center;
+ 
+  font-weight: 700;
+  display: none;
+
 }
 
 .player-score {
@@ -278,6 +319,16 @@ body {
 .controls .reset-scores-btn:hover {
     background-color: #810050f1;
 }
+
+/* ADDED: Go back button */
+.controls .go-back-btn {
+    background-color: #1f1f1f;
+}
+
+.controls .go-back-btn:hover {
+    background-color: #2f2f2f;
+}
+/* END ADDED */
 
 @keyframes winner-move {
   0% {

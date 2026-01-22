@@ -1,4 +1,117 @@
- function GameBoard() {
+// ADDED: Minimax AI Algorithm
+function MinimaxAI() {
+    const findBestMove = (board, aiMarker, humanMarker) => {
+        let bestScore = -Infinity;
+        let bestMove = null;
+
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (board[i][j] === "") {
+                    board[i][j] = aiMarker;
+                    let score = minimax(board, 0, false, aiMarker, humanMarker);
+                    board[i][j] = "";
+                    
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = { row: i, column: j };
+                    }
+                }
+            }
+        }
+        return bestMove;
+    };
+
+    const minimax = (board, depth, isMaximizing, aiMarker, humanMarker) => {
+        const result = checkGameState(board, aiMarker, humanMarker);
+        
+        if (result !== null) {
+            return result;
+        }
+
+        if (isMaximizing) {
+            let bestScore = -Infinity;
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === "") {
+                        board[i][j] = aiMarker;
+                        let score = minimax(board, depth + 1, false, aiMarker, humanMarker);
+                        board[i][j] = "";
+                        bestScore = Math.max(score, bestScore);
+                    }
+                }
+            }
+            return bestScore;
+        } else {
+            let bestScore = Infinity;
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (board[i][j] === "") {
+                        board[i][j] = humanMarker;
+                        let score = minimax(board, depth + 1, true, aiMarker, humanMarker);
+                        board[i][j] = "";
+                        bestScore = Math.min(score, bestScore);
+                    }
+                }
+            }
+            return bestScore;
+        }
+    };
+
+    const checkGameState = (board, aiMarker, humanMarker) => {
+        // Check winner
+        const winner = checkWinnerForMinimax(board);
+        if (winner === aiMarker) return 10;
+        if (winner === humanMarker) return -10;
+        
+        // Check draw
+        let isFull = true;
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (board[i][j] === "") {
+                    isFull = false;
+                    break;
+                }
+            }
+            if (!isFull) break;
+        }
+        if (isFull) return 0;
+        
+        return null;
+    };
+
+    const checkWinnerForMinimax = (board) => {
+        // Check rows
+        for (let i = 0; i < 3; i++) {
+            if (board[i][0] !== "" && board[i][0] === board[i][1] && board[i][1] === board[i][2]) {
+                return board[i][0];
+            }
+        }
+        
+        // Check columns
+        for (let j = 0; j < 3; j++) {
+            if (board[0][j] !== "" && board[0][j] === board[1][j] && board[1][j] === board[2][j]) {
+                return board[0][j];
+            }
+        }
+        
+        // Check diagonals
+        if (board[1][1] !== "") {
+            if (board[0][0] === board[1][1] && board[1][1] === board[2][2]) {
+                return board[1][1];
+            }
+            if (board[0][2] === board[1][1] && board[1][1] === board[2][0]) {
+                return board[1][1];
+            }
+        }
+        
+        return null;
+    };
+
+    return { findBestMove };
+}
+// END ADDED
+
+function GameBoard() {
     let board = [];
     const rows = 3;
     
@@ -36,16 +149,18 @@
     return { getBoard, pickCell, cellAllMarked, reset };
 }
 
-function GameController(player1Name, player2Name) {
+// MODIFIED: Added isAI parameter for GameController
+function GameController(player1Name, player2Name, isAIMode = false) {
     const players = [
-        { marker: "O", name: player1Name || "Player 1", score: 0 },
-        { marker: "X", name: player2Name || "Player 2", score: 0 }
+        { marker: "O", name: player1Name || "Player 1", score: 0, isAI: false },
+        { marker: "X", name: player2Name || (isAIMode ? "AI" : "Player 2"), score: 0, isAI: isAIMode }
     ];
 
     let activePlayerIndex = 0;
     let winner = null;
     let winningCells = [];
     const board = GameBoard();
+    const ai = MinimaxAI(); // ADDED: Initialize AI
 
     const getActivePlayer = () => players[activePlayerIndex];
     const getPlayers = () => players;
@@ -72,6 +187,19 @@ function GameController(player1Name, player2Name) {
 
         return true;
     };
+
+    // ADDED: AI move method
+    const makeAIMove = () => {
+        if (winner || !getActivePlayer().isAI) return null;
+        
+        const currentBoard = board.getBoard();
+        const aiMarker = getActivePlayer().marker;
+        const humanMarker = players[0].marker;
+        
+        const move = ai.findBestMove(currentBoard, aiMarker, humanMarker);
+        return move;
+    };
+    // END ADDED
 
     const checkWinner = (row, column) => {
         const board2d = board.getBoard();
@@ -120,23 +248,47 @@ function GameController(player1Name, player2Name) {
         getWinningCells,
         board,
         resetGame,
-        resetScores
+        resetScores,
+        makeAIMove  // ADDED: Export AI move method
     };
 }
 
 function ScreenController() {
     let game = null;
+    let isAIMode = false; // Track game mode
     
     const setupScreen = document.getElementById('setupScreen');
     const gameScreen = document.getElementById('gameScreen');
     const startBtn = document.getElementById('startBtn');
     const player1NameInput = document.getElementById('player1Name');
     const player2NameInput = document.getElementById('player2Name');
+    const player2NameGroup = document.getElementById('player2NameGroup');
     const boardDiv = document.getElementById('board');
     const player1Turn = document.getElementById('player1Turn');
     const player2Turn = document.getElementById('player2Turn');
     const newGameBtn = document.getElementById('newGameBtn');
     const resetScoresBtn = document.getElementById('resetScoresBtn');
+    const goBackBtn = document.getElementById('goBackBtn');
+    const modeButtons = document.querySelectorAll('.mode-btn');
+    const aiThinkingDiv = document.getElementById('aiThinking');
+
+    // ADDED: Mode selection handling
+    modeButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault(); // Prevent any default behavior
+            modeButtons.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            isAIMode = btn.dataset.mode === 'ai';
+            
+            // Hide/show player 2 name input based on mode
+            if (isAIMode) {
+                player2NameGroup.style.display = 'none';
+            } else {
+                player2NameGroup.style.display = 'flex';
+            }
+        });
+    });
+    // END ADDED
 
     startBtn.addEventListener('click', startGame);
     
@@ -153,11 +305,29 @@ function ScreenController() {
         }
     });
 
+    // ADDED: Go back button handler
+    goBackBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to go back to setup? This will reset all scores.')) {
+            gameScreen.classList.remove('active');
+            setupScreen.classList.add('active');
+            game = null;
+            
+            // Reset form
+            player1NameInput.value = '';
+            player2NameInput.value = '';
+            isAIMode = false;
+            modeButtons.forEach(b => b.classList.remove('selected'));
+            modeButtons[0].classList.add('selected');
+            player2NameGroup.style.display = 'flex';
+        }
+    });
+    // END ADDED
+
     function startGame() {
         const name1 = player1NameInput.value.trim() || 'Player 1';
-        const name2 = player2NameInput.value.trim() || 'Player 2';
+        const name2 = isAIMode ? 'AI' : (player2NameInput.value.trim() || 'Player 2'); // MODIFIED
         
-        game = GameController(name1, name2);
+        game = GameController(name1, name2, isAIMode); // MODIFIED: Pass AI mode
         
         document.getElementById('player1NameDisplay').textContent = name1;
         document.getElementById('player2NameDisplay').textContent = name2;
@@ -183,9 +353,12 @@ function ScreenController() {
         document.getElementById('score1').textContent = players[0].score;
         document.getElementById('score2').textContent = players[1].score;
 
+        
+
         // Update active player indicator
         player1Turn.classList.toggle('active-player', !winner && activePlayer.marker === 'O');
         player2Turn.classList.toggle('active-player', !winner && activePlayer.marker === 'X');
+
 
         // Render board
         boardDiv.innerHTML = '';
@@ -216,7 +389,28 @@ function ScreenController() {
         // Show winner message
         if (winner) {
             displayWinner(winner);
+        } else if (activePlayer.isAI && !winner) {
+
+            // Disable all cells while AI is "thinking"
+            const allCells = boardDiv.querySelectorAll('.cell');
+            allCells.forEach(cell => cell.disabled = true);
+
+
+            aiThinkingDiv.style.display = 'block'; // Show message that AI is thinking.
+
+            // ADDED: Trigger AI move after a short delay
+            setTimeout(() => {
+                const aiMove = game.makeAIMove();
+                if (aiMove) {
+                    game.playRound(aiMove.row, aiMove.column);
+                    updateScreen();
+                }
+
+                // Hide AI thinking message after move
+                aiThinkingDiv.style.display = 'none';
+            }, 800);
         }
+        // END ADDED
     }
 
     const displayWinner = (winner) => {
