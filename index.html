@@ -12,12 +12,21 @@
         
         <!-- Setup Screen -->
         <div class="setup-screen active" id="setupScreen">
-            <!-- ADDED: Game mode selection -->
+         
             <div class="mode-selection">
                 <button class="mode-btn selected" data-mode="pvp">Player vs Player</button>
                 <button class="mode-btn" data-mode="ai">Player vs AI</button>
             </div>
-            <!-- END ADDED -->
+     
+            <div class="difficulty-selection" id="difficultySelection">
+                <label>AI Difficulty:</label>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn" data-difficulty="easy">Easy</button>
+                    <button class="difficulty-btn selected" data-difficulty="medium">Medium</button>
+                    <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+                </div>
+            </div>
+        
             
             <div class="name-input-group">
                 <label for="player1Name">Player 1 Name (O):</label>
@@ -46,9 +55,6 @@
             <div class="turn">
                 <div class="player" id="player1Turn">Player O</div>
                 <div class="player" id="player2Turn">Player X</div>
-            </div>
-            <div class="ai-thinking" id="aiThinking">
-            AI IS THINKING...
             </div>
 
             <div class="box" id="board"></div>

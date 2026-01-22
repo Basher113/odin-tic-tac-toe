@@ -1,6 +1,20 @@
-// ADDED: Minimax AI Algorithm
-function MinimaxAI() {
+function MinimaxAI(difficulty = 'hard') {
     const findBestMove = (board, aiMarker, humanMarker) => {
+        // Easy: Make random moves most of the time
+        if (difficulty === 'easy') {
+            if (Math.random() < 0.7) {
+                return getRandomMove(board);
+            }
+        }
+        
+        // Medium: Mix of random and optimal moves
+        if (difficulty === 'medium') {
+            if (Math.random() < 0.4) {
+                return getRandomMove(board);
+            }
+        }
+        
+        // Hard: Always use minimax (optimal play)
         let bestScore = -Infinity;
         let bestMove = null;
 
@@ -19,6 +33,18 @@ function MinimaxAI() {
             }
         }
         return bestMove;
+    };
+
+    const getRandomMove = (board) => {
+        const availableMoves = [];
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (board[i][j] === "") {
+                    availableMoves.push({ row: i, column: j });
+                }
+            }
+        }
+        return availableMoves[Math.floor(Math.random() * availableMoves.length)];
     };
 
     const minimax = (board, depth, isMaximizing, aiMarker, humanMarker) => {
@@ -149,8 +175,8 @@ function GameBoard() {
     return { getBoard, pickCell, cellAllMarked, reset };
 }
 
-// MODIFIED: Added isAI parameter for GameController
-function GameController(player1Name, player2Name, isAIMode = false) {
+// MODIFIED: Added difficulty parameter for GameController
+function GameController(player1Name, player2Name, isAIMode = false, aiDifficulty = 'medium') {
     const players = [
         { marker: "O", name: player1Name || "Player 1", score: 0, isAI: false },
         { marker: "X", name: player2Name || (isAIMode ? "AI" : "Player 2"), score: 0, isAI: isAIMode }
@@ -160,7 +186,7 @@ function GameController(player1Name, player2Name, isAIMode = false) {
     let winner = null;
     let winningCells = [];
     const board = GameBoard();
-    const ai = MinimaxAI(); // ADDED: Initialize AI
+    const ai = MinimaxAI(aiDifficulty); // MODIFIED: Pass difficulty to AI
 
     const getActivePlayer = () => players[activePlayerIndex];
     const getPlayers = () => players;
@@ -255,22 +281,24 @@ function GameController(player1Name, player2Name, isAIMode = false) {
 
 function ScreenController() {
     let game = null;
-    let isAIMode = false; // Track game mode
+    let isAIMode = false; // ADDED: Track game mode
+    let aiDifficulty = 'medium'; // ADDED: Track AI difficulty
     
     const setupScreen = document.getElementById('setupScreen');
     const gameScreen = document.getElementById('gameScreen');
     const startBtn = document.getElementById('startBtn');
     const player1NameInput = document.getElementById('player1Name');
     const player2NameInput = document.getElementById('player2Name');
-    const player2NameGroup = document.getElementById('player2NameGroup');
+    const player2NameGroup = document.getElementById('player2NameGroup'); // ADDED
+    const difficultySelection = document.getElementById('difficultySelection'); // ADDED
     const boardDiv = document.getElementById('board');
     const player1Turn = document.getElementById('player1Turn');
     const player2Turn = document.getElementById('player2Turn');
     const newGameBtn = document.getElementById('newGameBtn');
     const resetScoresBtn = document.getElementById('resetScoresBtn');
-    const goBackBtn = document.getElementById('goBackBtn');
-    const modeButtons = document.querySelectorAll('.mode-btn');
-    const aiThinkingDiv = document.getElementById('aiThinking');
+    const goBackBtn = document.getElementById('goBackBtn'); // ADDED
+    const modeButtons = document.querySelectorAll('.mode-btn'); // ADDED
+    const difficultyButtons = document.querySelectorAll('.difficulty-btn'); // ADDED
 
     // ADDED: Mode selection handling
     modeButtons.forEach(btn => {
@@ -280,12 +308,25 @@ function ScreenController() {
             btn.classList.add('selected');
             isAIMode = btn.dataset.mode === 'ai';
             
-            // Hide/show player 2 name input based on mode
+            // Hide/show player 2 name input and difficulty based on mode
             if (isAIMode) {
                 player2NameGroup.style.display = 'none';
+                difficultySelection.classList.add('active');
             } else {
                 player2NameGroup.style.display = 'flex';
+                difficultySelection.classList.remove('active');
             }
+        });
+    });
+    // END ADDED
+
+    // ADDED: Difficulty selection handling
+    difficultyButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            difficultyButtons.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            aiDifficulty = btn.dataset.difficulty;
         });
     });
     // END ADDED
@@ -316,9 +357,13 @@ function ScreenController() {
             player1NameInput.value = '';
             player2NameInput.value = '';
             isAIMode = false;
+            aiDifficulty = 'medium'; // ADDED: Reset difficulty
             modeButtons.forEach(b => b.classList.remove('selected'));
             modeButtons[0].classList.add('selected');
+            difficultyButtons.forEach(b => b.classList.remove('selected')); // ADDED: Reset difficulty buttons
+            difficultyButtons[1].classList.add('selected'); // ADDED: Select medium by default
             player2NameGroup.style.display = 'flex';
+            difficultySelection.classList.remove('active'); // ADDED: Hide difficulty selection
         }
     });
     // END ADDED
@@ -327,7 +372,7 @@ function ScreenController() {
         const name1 = player1NameInput.value.trim() || 'Player 1';
         const name2 = isAIMode ? 'AI' : (player2NameInput.value.trim() || 'Player 2'); // MODIFIED
         
-        game = GameController(name1, name2, isAIMode); // MODIFIED: Pass AI mode
+        game = GameController(name1, name2, isAIMode, aiDifficulty); // MODIFIED: Pass AI difficulty
         
         document.getElementById('player1NameDisplay').textContent = name1;
         document.getElementById('player2NameDisplay').textContent = name2;
@@ -353,12 +398,9 @@ function ScreenController() {
         document.getElementById('score1').textContent = players[0].score;
         document.getElementById('score2').textContent = players[1].score;
 
-        
-
         // Update active player indicator
         player1Turn.classList.toggle('active-player', !winner && activePlayer.marker === 'O');
         player2Turn.classList.toggle('active-player', !winner && activePlayer.marker === 'X');
-
 
         // Render board
         boardDiv.innerHTML = '';
@@ -390,14 +432,6 @@ function ScreenController() {
         if (winner) {
             displayWinner(winner);
         } else if (activePlayer.isAI && !winner) {
-
-            // Disable all cells while AI is "thinking"
-            const allCells = boardDiv.querySelectorAll('.cell');
-            allCells.forEach(cell => cell.disabled = true);
-
-
-            aiThinkingDiv.style.display = 'block'; // Show message that AI is thinking.
-
             // ADDED: Trigger AI move after a short delay
             setTimeout(() => {
                 const aiMove = game.makeAIMove();
@@ -405,10 +439,7 @@ function ScreenController() {
                     game.playRound(aiMove.row, aiMove.column);
                     updateScreen();
                 }
-
-                // Hide AI thinking message after move
-                aiThinkingDiv.style.display = 'none';
-            }, 800);
+            }, 500);
         }
         // END ADDED
     }
